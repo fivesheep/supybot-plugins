@@ -54,6 +54,7 @@ class IMDB(callbacks.Plugin):
                     'hdtvrip']
         self.regex=re.compile(r'^(.*?)(\.\d{4})?\.('+'|'.join(split_keys)+')\..*?-.*?$',re.I)
         self.regex_limited=re.compile(r'<tr><td><b><a href="/Recent/USA">USA</a></b></td>\r?\n    <td align="right"><a href=".*?">(.*?)</a> <a href=".*?">(\d{4})</a></td>\r?\n    <td> \(limited\)</td></tr>',re.MULTILINE)
+        self.regex_screens=re.compile(r'\d+ \((USA|Canada)\) \(<a.*?a>\) \(([0-9,]+) Screens\)',re.I)
 
     def imdb(self,irc,msg,args,movie):
         global engine
@@ -78,13 +79,29 @@ class IMDB(callbacks.Plugin):
             if item.has_key('rating'): rating="%s/10.0 of %s votes" % (item['rating'], item['votes'])
             url=r'http://www.imdb.com/title/tt%s'%item.movieID
 
+            # for limited info
             releaseinfo=urllib.urlopen(url+'/releaseinfo').read()
             limitedinfo=self.regex_limited.findall(releaseinfo)
             if len(limitedinfo)>0:
                 limited=" USA %s %s (limited)"%limitedinfo[0]
+            
+            # for screens info
+            bussiness_data=urllib.urlopen(url+'/business').read()
+            weekend_gross=bussiness_data[bussiness_data.find(r"<h5>Weekend Gross</h5>"):]
+            screen_infos=self.regex_screens.findall(weeken_gross)
+            screen_usa,screen_canada=0,0
+            for country,screens in screen_infos:
+                screens=int(screens.replace(',',''))
+                if country=='USA':
+                    screen_usa+=screens
+                else:
+                    screen_canada+=screens
 
-            irc.reply("07[Name: %s] [Year: %s] [Countries: %s] [Genres: %s] [Runtimes: %s] [Rating: %s] [Limited: %s]" % 
-                        (title,year,countries,genres,runtimes, rating, limited))
+
+
+
+            irc.reply("07[Name: %s] [Year: %s] [Countries: %s] [Genres: %s] [Runtimes: %s] [Rating: %s] [Limited: %s] [Screens: USA %d | Canada %d ]" %
+                        (title,year,countries,genres,runtimes, rating, limited,screen_usa,screen_canada))
             irc.reply("12[URL: %s ]"%url)
 
     imdb=wrap(imdb,['text'])
