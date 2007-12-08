@@ -88,7 +88,7 @@ class IMDB(callbacks.Plugin):
             # for screens info
             bussiness_data=urllib.urlopen(url+'/business').read()
             weekend_gross=bussiness_data[bussiness_data.find(r"<h5>Weekend Gross</h5>"):]
-            screen_infos=self.regex_screens.findall(weeken_gross)
+            screen_infos=self.regex_screens.findall(weekend_gross)
             screen_usa,screen_canada=0,0
             for country,screens in screen_infos:
                 screens=int(screens.replace(',',''))
