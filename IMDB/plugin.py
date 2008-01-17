@@ -88,8 +88,8 @@ class IMDB(callbacks.Plugin):
             # for screens info
             bussiness_data=urllib.urlopen(url+'/business').read()
             ow_start=bussiness_data.find(r'<h5>Opening Weekend</h5>')+len(r'<h5>Opening Weekend</h5>')
-            ow_end=bussiness_data.find('<h5>',start)
-            ow=bussiness_data[start_index:end_index]
+            ow_end=bussiness_data.find('<h5>',ow_start)
+            ow=bussiness_data[ow_start:ow_end]
             screen_infos=self.regex_screens.findall(ow)
             screen_usa,screen_uk=0,0
             for country,screens in screen_infos:
@@ -100,7 +100,7 @@ class IMDB(callbacks.Plugin):
                     screen_uk+=screens
 
             irc.reply("07[Name: %s] [Year: %s] [Countries: %s] [Genres: %s] [Runtimes: %s] [Rating: %s] [Limited: %s] [Screens: USA %d | UK %d]" %
-                        (title,year,countries,genres,runtimes, rating, limited,screen_usa,screen_canada))
+                        (title,year,countries,genres,runtimes, rating, limited,screen_usa,screen_uk))
             irc.reply("12[URL: %s ]"%url)
 
     imdb=wrap(imdb,['text'])
