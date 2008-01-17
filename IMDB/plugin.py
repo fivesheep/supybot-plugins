@@ -54,7 +54,7 @@ class IMDB(callbacks.Plugin):
                     'hdtvrip']
         self.regex=re.compile(r'^(.*?)(\.\d{4})?\.('+'|'.join(split_keys)+')\..*?-.*?$',re.I)
         self.regex_limited=re.compile(r'<tr><td><b><a href="/Recent/USA">USA</a></b></td>\r?\n    <td align="right"><a href=".*?">(.*?)</a> <a href=".*?">(\d{4})</a></td>\r?\n    <td> \(limited\)</td></tr>',re.MULTILINE)
-        self.regex_screens=re.compile(r'\d+ \((USA|Canada)\) \(<a.*?a>\) \(([0-9,]+) Screens\)',re.I)
+        self.regex_screens=re.compile(r'\d+ \((USA|UK)\) \(<a.*?a>\) \(([0-9,]+) Screens\)',re.I)
 
     def imdb(self,irc,msg,args,movie):
         global engine
@@ -87,20 +87,19 @@ class IMDB(callbacks.Plugin):
             
             # for screens info
             bussiness_data=urllib.urlopen(url+'/business').read()
-            weekend_gross=bussiness_data[bussiness_data.find(r"<h5>Weekend Gross</h5>"):]
-            screen_infos=self.regex_screens.findall(weekend_gross)
-            screen_usa,screen_canada=0,0
+            ow_start=bussiness_data.find(r'<h5>Opening Weekend</h5>')+len(r'<h5>Opening Weekend</h5>')
+            ow_end=bussiness_data.find('<h5>',start)
+            ow=bussiness_data[start_index:end_index]
+            screen_infos=self.regex_screens.findall(ow)
+            screen_usa,screen_uk=0,0
             for country,screens in screen_infos:
                 screens=int(screens.replace(',',''))
                 if country=='USA':
                     screen_usa+=screens
                 else:
-                    screen_canada+=screens
+                    screen_uk+=screens
 
-
-
-
-            irc.reply("07[Name: %s] [Year: %s] [Countries: %s] [Genres: %s] [Runtimes: %s] [Rating: %s] [Limited: %s] [Screens: USA %d | Canada %d ]" %
+            irc.reply("07[Name: %s] [Year: %s] [Countries: %s] [Genres: %s] [Runtimes: %s] [Rating: %s] [Limited: %s] [Screens: USA %d | UK %d]" %
                         (title,year,countries,genres,runtimes, rating, limited,screen_usa,screen_canada))
             irc.reply("12[URL: %s ]"%url)
 
