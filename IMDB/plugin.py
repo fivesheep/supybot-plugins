@@ -54,7 +54,7 @@ class IMDB(callbacks.Plugin):
                     'hdtvrip']
         self.regex=re.compile(r'^(.*?)(\.\d{4})?\.('+'|'.join(split_keys)+')\..*?-.*?$',re.I)
         self.regex_limited=re.compile(r'<tr><td><b><a href="/Recent/USA">USA</a></b></td>\r?\n    <td align="right"><a href=".*?">(.*?)</a> <a href=".*?">(\d{4})</a></td>\r?\n    <td> \(limited\)</td></tr>',re.MULTILINE)
-        self.regex_screens=re.compile(r'\d+ \((USA|UK)\) \(<a.*?a>\) \(([0-9,]+) Screens\)',re.I)
+        self.regex_screens=re.compile(r'\d+ \((USA|UK)\) \(<a.*?a>\) \(([0-9,]+) Screens?\)',re.I)
 
     def imdb(self,irc,msg,args,movie):
         global engine
