@@ -136,7 +136,7 @@ class TvrageSearchEngine:
             return {}
 
     def keyword_filter(self,keyword):
-        patt=re.compile(r'\.(S\d+E|\d+x|E)\d+\.')
+        patt=re.compile(r'\.(S\d+E|\d+x|E)\d+\.?')
         match=patt.search(keyword)
         if match:
             keyword=keyword[:match.start()]
