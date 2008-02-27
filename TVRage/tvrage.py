@@ -8,7 +8,52 @@ import traceback
 class TvrageSearchEngine:
     def __init__(self):
         self.header={'User-agent' : 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2)'}
+        split_keys=['1080i', '1080p', '720p', 'avc', 'bdrip', 'blueray',
+                    'cam', 'camera', 'dsr', 'dsrip', 'dvbrip', 'dvd', 'dvdrip', 'dvdscr',
+                    'fs', 'fullscreen', 'hd','hddvdrip', 'hddvd', 'hdrip', 'hdtv', 'hr',
+                    'int', 'internal', 'limited', 'pdtv', 'proper', 'r[1-6]', 'repack', 'rerip', 
+                    'retail','satrip', 'screener', 'sdtv', 'svcd', 'subbed',
+                    'tc', 'telecine', 'telesync', 'ts', 'tvdvdr', 'tvrip',
+                    'vc1','vc-1', 'vcd', 'vhsrip', 'wmv', 'workprint', 'x264', 'xvid']
+        self.regex=re.compile(r'^(.*?)(\.\d{4})?\.('+'|'.join(split_keys)+')\..*?-.*?$',re.I)
 
+    def quick_search(self,show):
+        tmp={   'Show Name':'',
+                'Premiered':'',
+                'Country':'',
+                'Status':'',
+                'Genres':'',
+                'Classification':'',
+                'Latest Episode':'',
+                'Show URL':'' }
+        url=self._quickinfoUrl(show)
+        # print "search url: %s"%url
+        results=[ l.replace('\n','').split('@') for l in urllib.urlopen(url).readlines()]
+
+        if len(results)>2:
+            for item in results:
+                if len(item)==2:
+                    tmp[item[0]]=item[1]
+            return tmp
+        else:
+            return {}
+
+    def _quickinfoUrl(self,qstr):
+        # Filtering the querying string to remove the interference factors,
+        # and then generate the querying url.
+        qstr=qstr.strip()
+        groups=self.regex.findall(qstr)
+        if len(groups)>0:
+            qstr=groups[0][0]
+        patt=re.compile(r'\.(S\d+E|\d+x|E)\d+\.?')
+        match=patt.search(qstr)
+        if match:
+            qstr=qstr[:match.start()]
+        return r'http://www.tvrage.com/quickinfo.php?show='+qstr.replace('.','+')
+
+    ######################################################################
+    #   Lines below are out-of-date. will be deleted.
+    ######################################################################
     def make_req(self,url,post_data=None):
         if post_data!=None:
             post_data=urllib.urlencode(post_data)
@@ -113,35 +158,6 @@ class TvrageSearchEngine:
             temp.append("%s %s"%(key,result[key]))
 
         return temp
-
-    def quick_search(self,keywords):
-        tmp={   'Show Name':'',
-                'Premiered':'',
-                'Country':'',
-                'Status':'',
-                'Genres':'',
-                'Classification':'',
-                'Latest Episode':'',
-                'Show URL':'' }
-        url=r'http://www.tvrage.com/quickinfo.php?show=' + self.keyword_filter('+'.join(keywords))
-        # print "search url: %s"%url
-        results=[ l.replace('\n','').split('@') for l in urllib.urlopen(url).readlines()]
-
-        if len(results)>2:
-            for item in results:
-                if len(item)==2:
-                    tmp[item[0]]=item[1]
-            return tmp
-        else:
-            return {}
-
-    def keyword_filter(self,keyword):
-        patt=re.compile(r'\.(S\d+E|\d+x|E)\d+\.?')
-        match=patt.search(keyword)
-        if match:
-            keyword=keyword[:match.start()]
-
-        return keyword.replace('.','+')
 
 
 ##if __name__=='__main__':

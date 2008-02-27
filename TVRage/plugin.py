@@ -48,14 +48,6 @@ class TVRage(callbacks.Plugin):
 
         self.encode=conf.supybot.plugins.TVRage.encode()
         self.search_engine=tvrage.TvrageSearchEngine()
-        split_keys=['1080i', '1080p', '720p', 'avc', 'bdrip', 'blueray',
-                    'cam', 'camera', 'dsr', 'dsrip', 'dvbrip', 'dvd', 'dvdrip', 'dvdscr',
-                    'fs', 'fullscreen', 'hd','hddvdrip', 'hddvd', 'hdrip', 'hdtv', 'hr',
-                    'int', 'internal', 'limited', 'pdtv', 'proper', 'r[1-6]', 'repack', 'rerip', 
-                    'retail','satrip', 'screener', 'sdtv', 'svcd', 'subbed',
-                    'tc', 'telecine', 'telesync', 'ts', 'tvdvdr', 'tvrip',
-                    'vc1','vc-1', 'vcd', 'vhsrip', 'wmv', 'workprint', 'x264', 'xvid']
-        self.regex=re.compile(r'^(.*?)(\.\d{4})?\.('+'|'.join(split_keys)+')\..*?-.*?$',re.I)
         #print self.encode
 
     def tv(self,irc,msg,args,show):
@@ -64,21 +56,14 @@ class TVRage(callbacks.Plugin):
            search the tv show via http://www.tvrage.com
         """
         try:
-            show_raw=show
-            show=show.replace('_','.')
-            groups=self.regex.findall(show.strip())
-            if len(groups)>0:
-                keyword=groups[0]
-            else:
-                keyword=show.strip().split(' ')
-            results=self.search_engine.quick_search(keyword)
+            results=self.search_engine.quick_search(show)
             if len(results)==0:
                 irc.reply("03Nothing Found!")
             else:
                 irc.reply(show_raw+" 07[Name: %s] [Premiered: %s] [Country: %s] [Status: %s] [Classification: %s] [Genres: %s] [Latest Episode: %s]"%(
                                 results['Show Name'],results['Premiered'],results['Country'],results['Status'],
                                 results['Classification'],results['Genres'],results['Latest Episode']))
-                irc.reply("12[URL: %s]"%(results['Show URL']))
+                irc.reply("12[URL: %s ]"%(results['Show URL']))
         except:
             irc.reply("Oops, an exception happended during searching!")
             traceback.print_exc()
