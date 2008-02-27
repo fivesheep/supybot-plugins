@@ -60,7 +60,7 @@ class TVRage(callbacks.Plugin):
             if len(results)==0:
                 irc.reply("03Nothing Found!")
             else:
-                irc.reply(show_raw+" 07[Name: %s] [Premiered: %s] [Country: %s] [Status: %s] [Classification: %s] [Genres: %s] [Latest Episode: %s]"%(
+                irc.reply(show+" 07[Name: %s] [Premiered: %s] [Country: %s] [Status: %s] [Classification: %s] [Genres: %s] [Latest Episode: %s]"%(
                                 results['Show Name'],results['Premiered'],results['Country'],results['Status'],
                                 results['Classification'],results['Genres'],results['Latest Episode']))
                 irc.reply("12[URL: %s ]"%(results['Show URL']))
