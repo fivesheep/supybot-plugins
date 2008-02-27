@@ -27,7 +27,6 @@ class TvrageSearchEngine:
                 'Latest Episode':'',
                 'Show URL':'' }
         url=self._quickinfoUrl(show)
-        # print "search url: %s"%url
         results=[ l.replace('\n','').split('@') for l in urllib.urlopen(url).readlines()]
 
         if len(results)>2:
@@ -41,7 +40,7 @@ class TvrageSearchEngine:
     def _quickinfoUrl(self,qstr):
         # Filtering the querying string to remove the interference factors,
         # and then generate the querying url.
-        qstr=qstr.strip()
+        qstr=qstr.strip().replace('_','.')
         groups=self.regex.findall(qstr)
         if len(groups)>0:
             qstr=groups[0][0]
@@ -49,7 +48,9 @@ class TvrageSearchEngine:
         match=patt.search(qstr)
         if match:
             qstr=qstr[:match.start()]
-        return r'http://www.tvrage.com/quickinfo.php?show='+qstr.replace('.','+')
+        qstr=qstr.replace('.',' ')
+        qstr='+'.join([ s for s in qstr.split(' ') if s!=''])
+        return r'http://www.tvrage.com/quickinfo.php?show='+qstr
 
     ######################################################################
     #   Lines below are out-of-date. will be deleted.
