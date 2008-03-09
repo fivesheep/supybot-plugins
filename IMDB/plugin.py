@@ -36,6 +36,7 @@ import supybot.callbacks as callbacks
 import imdb as pyimdb
 import re
 import urllib
+import traceback
 
 engine=pyimdb.IMDb()
 
@@ -55,6 +56,16 @@ class IMDB(callbacks.Plugin):
         self.regex=re.compile(r'^(.*?)(\.\d{4})?\.('+'|'.join(split_keys)+')\..*?-.*?$',re.I)
         self.regex_limited=re.compile(r'<tr><td><b><a href="/Recent/USA">USA</a></b></td>\r?\n    <td align="right"><a href=".*?">(.*?)</a> <a href=".*?">(\d{4})</a></td>\r?\n    <td> \(limited\)</td></tr>',re.MULTILINE)
         self.regex_screens=re.compile(r'\d+ \((USA|UK)\) \(<a.*?a>\) \(([0-9,]+) Screens?\)',re.I)
+        self.rx_tt=re.compile(r'tt\d{4,}',re.I)
+        self.rx_title=re.compile(r'<title>(.*?) \((\d{4})\)</title>', re.I)
+        self.rx_rating=re.compile(r'<b>(\d\.\d)/10</b>.*\(<a href="ratings">([0-9,]+) votes</a>\)',re.I)
+        
+        self.rx_h5=re.compile(r'<h5>(Genre|Runtime|Country):</h5>',re.I)
+        self.h5_rxs={
+                     'Genre':re.compile(r'\/Sections\/Genres\/.*?\/">(.*?)</a>',re.I),
+                     'Runtime':re.compile(r'\d+ min',re.I),
+                     'Country':re.compile(r'\/Sections\/Countries\/.*?\/">(.*?)</a>',re.I)
+                    }
 
     def imdb(self,irc,msg,args,movie):
         global engine
@@ -76,7 +87,7 @@ class IMDB(callbacks.Plugin):
             if item.has_key('genres'): genres='|'.join(item['genres'])
             if item.has_key('countries'): countries='|'.join(item['countries'])
             if item.has_key('runtimes'): runtimes="%s min"%('|'.join(item['runtimes']))
-            if item.has_key('rating'): rating="%s/10.0 of %s votes" % (item['rating'], item['votes'])
+            if item.has_key('rating'): rating="%s/10 of %s votes" % (item['rating'], item['votes'])
             url=r'http://www.imdb.com/title/tt%s'%item.movieID
 
             # for limited info
@@ -104,6 +115,100 @@ class IMDB(callbacks.Plugin):
             irc.reply("12[URL: %s ]"%url)
 
     imdb=wrap(imdb,['text'])
+    
+    def _get_base_info(self,ttid):
+        """
+            Fetch the movie infos by the ttid.
+            Including: Title,Year,Rating,Genre,Country,Runtime
+        """
+        url=r'http://www.imdb.com/title/%s'%ttid
+        movie=urllib.urlopen(url)
+        result={ }
+           
+        # parsing the html
+        while(1):
+            rawline=movie.readline()
+            line=rawline.rstrip('\n')
+                
+            if not result.has_key('Title') and line.startswith('<title>'):
+                m=self.rx_title.match(line)
+                if m!=None:
+                    result['Title']=m.group(1)
+                    result['Year']=m.group(2)
+                    title=m.group(1)
+                    year=m.group(2)
+            elif not result.has_key('Rating') and line==r'<b>User Rating:</b>':
+                data=movie.readline().rstrip('\n')
+                data+=movie.readline().rstrip('\n')
+                m=self.rx_rating.match(data)
+                if m!=None:
+                    result['Rating']="%s/10 of %s votes"%(m.group(1),m.group(2))
+                else:
+                    result['Rating']=None
+            elif line.startswith('<h5>'):
+                m=self.rx_h5.match(line)
+                if m!=None:
+                    h5_type=m.group(1)
+                    data=movie.readline()
+                    result[h5_type]='|'.join(self.h5_rxs[h5_type].findall(data))
+            else:
+                # Break, if "Title,Year,Rating,Genre,Country,Runtime" are in the result,
+                # or end of the file reached
+                if len(result)==6 or rawline=='':
+                    movie.close()
+                    break
+        
+        return result
+    
+    def _get_limited_info(self,ttid):
+        # for limited info
+        url=r'http://www.imdb.com/title/%s/reaseinfo'%ttid
+        input=urllib.urlopen(url)
+        data=input.read()
+        input.close()
+        limitedinfo=self.regex_limited.findall(data)
+        if len(limitedinfo)>0:
+            limited=" USA %s %s (limited)"%limitedinfo[0]
+        else:
+            limited=''
+        return limited
+        
+    def _get_screen_info(self,ttid):
+        url=r'http://www.imdb.com/title/%s/business'%ttid
+        input=urllib.urlopen(url)
+        bussiness_data=input.read()
+        ow_start=bussiness_data.find(r'<h5>Opening Weekend</h5>')+len(r'<h5>Opening Weekend</h5>')
+        ow_end=bussiness_data.find('<h5>',ow_start)
+        ow=bussiness_data[ow_start:ow_end]
+        screen_infos=self.regex_screens.findall(ow)
+        screen_usa,screen_uk=0,0
+        for country,screens in screen_infos:
+            screens=int(screens.replace(',',''))
+            if country=='USA':
+                screen_usa+=screens
+            else:
+                screen_uk+=screens
+                
+        return "USA %d | UK %d"%(screen_usa,screen_uk)
+
+    def imdbtt(self,irc,msg,args,ttid):
+        # check if the given ttid is in the proper format
+        if not self.rx_tt.match(ttid):
+            irc.reply('Sorry, you must input a ttid for querying.')
+            return
+        
+        try:
+            base=self._get_base_info(ttid)
+            limited=self._get_limited_info(ttid)
+            screens=self._get_screen_info(ttid)
+            irc.reply("07[Name: %s] [Year: %s] [Countries: %s] [Genres: %s] [Runtimes: %s] [Rating: %s] [Limited: %s] [Screens: %s ]" %
+                        (base['Title'],base['Year'],base['Country'],base['Genre'],base['Runtime'], base['Rating'], limited,screens)) 
+            irc.reply("12[URL: http://www.imdb.com/title/%s ]"%url  )         
+        except:
+            irc.reply('Error, Please try lata.')
+            traceback.print_exc()
+            
+    imdbtt=wrap(imdbtt,['text'])        
 
 Class = IMDB
 
