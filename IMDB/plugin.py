@@ -137,7 +137,7 @@ class IMDB(callbacks.Plugin):
                     result['Year']=m.group(2)
                     title=m.group(1)
                     year=m.group(2)
-            elif not result.has_key('Rating') and line==r'<b>User Rating:</b>':
+            elif not result.has_key('Rating') and line.startswith('<b>User Rating:'):
                 data=movie.readline().rstrip('\n')
                 data+=movie.readline().rstrip('\n')
                 m=self.rx_rating.match(data)
@@ -203,7 +203,7 @@ class IMDB(callbacks.Plugin):
             screens=self._get_screen_info(ttid)
             irc.reply("07[Name: %s] [Year: %s] [Countries: %s] [Genres: %s] [Runtimes: %s] [Rating: %s] [Limited: %s] [Screens: %s ]" %
                         (base['Title'],base['Year'],base['Country'],base['Genre'],base['Runtime'], base['Rating'], limited,screens)) 
-            irc.reply("12[URL: http://www.imdb.com/title/%s ]"%url  )         
+            irc.reply("12[URL: http://www.imdb.com/title/%s ]"%ttid  )         
         except:
             irc.reply('Error, Please try lata.')
             traceback.print_exc()
