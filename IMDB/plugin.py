@@ -33,12 +33,13 @@ from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
-import imdb as pyimdb
+# import imdb as pyimdb
 import re
-import urllib
+#import urllib
+import urllib2
 import traceback
 
-engine=pyimdb.IMDb()
+# engine=pyimdb.IMDb()
 
 
 class IMDB(callbacks.Plugin):
@@ -67,54 +68,60 @@ class IMDB(callbacks.Plugin):
                      'Country':re.compile(r'\/Sections\/Countries\/.*?\/">(.*?)</a>',re.I)
                     }
 
-    def imdb(self,irc,msg,args,movie):
-        global engine
-        groups=self.regex.findall(movie)
-        if len(groups)>0:
-            keyword=groups[0]
-        else:
-            keyword=movie
-        results=engine.search_movie(keyword)
-        num_results=len(results)
-        if num_results==0:
-            irc.reply("Sorry, nothing found for: %s"%movie)
-        else:
-            item=results[0]
-            engine.update(item)
-            title,year,genres,countries,runtimes,rating,limited='','','','','','','N/A'
-            title=item['long imdb canonical title']
-            if item.has_key('year'): year=item['year']
-            if item.has_key('genres'): genres='|'.join(item['genres'])
-            if item.has_key('countries'): countries='|'.join(item['countries'])
-            if item.has_key('runtimes'): runtimes="%s min"%('|'.join(item['runtimes']))
-            if item.has_key('rating'): rating="%s/10 of %s votes" % (item['rating'], item['votes'])
-            url=r'http://www.imdb.com/title/tt%s'%item.movieID
+    # def imdb(self,irc,msg,args,movie):
+        # global engine
+        # groups=self.regex.findall(movie)
+        # if len(groups)>0:
+            # keyword=groups[0]
+        # else:
+            # keyword=movie
+        # results=engine.search_movie(keyword)
+        # num_results=len(results)
+        # if num_results==0:
+            # irc.reply("Sorry, nothing found for: %s"%movie)
+        # else:
+            # item=results[0]
+            # engine.update(item)
+            # title,year,genres,countries,runtimes,rating,limited='','','','','','','N/A'
+            # title=item['long imdb canonical title']
+            # if item.has_key('year'): year=item['year']
+            # if item.has_key('genres'): genres='|'.join(item['genres'])
+            # if item.has_key('countries'): countries='|'.join(item['countries'])
+            # if item.has_key('runtimes'): runtimes="%s min"%('|'.join(item['runtimes']))
+            # if item.has_key('rating'): rating="%s/10 of %s votes" % (item['rating'], item['votes'])
+            # url=r'http://www.imdb.com/title/tt%s'%item.movieID
 
-            # for limited info
-            releaseinfo=urllib.urlopen(url+'/releaseinfo').read()
-            limitedinfo=self.regex_limited.findall(releaseinfo)
-            if len(limitedinfo)>0:
-                limited=" USA %s %s (limited)"%limitedinfo[0]
+            # # for limited info
+            # releaseinfo=urllib.urlopen(url+'/releaseinfo').read()
+            # limitedinfo=self.regex_limited.findall(releaseinfo)
+            # if len(limitedinfo)>0:
+                # limited=" USA %s %s (limited)"%limitedinfo[0]
             
-            # for screens info
-            bussiness_data=urllib.urlopen(url+'/business').read()
-            ow_start=bussiness_data.find(r'<h5>Opening Weekend</h5>')+len(r'<h5>Opening Weekend</h5>')
-            ow_end=bussiness_data.find('<h5>',ow_start)
-            ow=bussiness_data[ow_start:ow_end]
-            screen_infos=self.regex_screens.findall(ow)
-            screen_usa,screen_uk=0,0
-            for country,screens in screen_infos:
-                screens=int(screens.replace(',',''))
-                if country=='USA':
-                    screen_usa+=screens
-                else:
-                    screen_uk+=screens
+            # # for screens info
+            # bussiness_data=urllib.urlopen(url+'/business').read()
+            # ow_start=bussiness_data.find(r'<h5>Opening Weekend</h5>')+len(r'<h5>Opening Weekend</h5>')
+            # ow_end=bussiness_data.find('<h5>',ow_start)
+            # ow=bussiness_data[ow_start:ow_end]
+            # screen_infos=self.regex_screens.findall(ow)
+            # screen_usa,screen_uk=0,0
+            # for country,screens in screen_infos:
+                # screens=int(screens.replace(',',''))
+                # if country=='USA':
+                    # screen_usa+=screens
+                # else:
+                    # screen_uk+=screens
 
-            irc.reply("07[Name: %s] [Year: %s] [Countries: %s] [Genres: %s] [Runtimes: %s] [Rating: %s] [Limited: %s] [Screens: USA %d | UK %d]" %
-                        (title,year,countries,genres,runtimes, rating, limited,screen_usa,screen_uk))
-            irc.reply("12[URL: %s ]"%url)
+            # irc.reply("07[Name: %s] [Year: %s] [Countries: %s] [Genres: %s] [Runtimes: %s] [Rating: %s] [Limited: %s] [Screens: USA %d | UK %d]" %
+                        # (title,year,countries,genres,runtimes, rating, limited,screen_usa,screen_uk))
+            # irc.reply("12[URL: %s ]"%url)
 
-    imdb=wrap(imdb,['text'])
+    # imdb=wrap(imdb,['text'])
+    
+    
+    def _urlopen(self,url):
+        req=urllib2.Request(url, None,
+                {'User-agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2)'})
+        return urllib2.urlopen(req)
     
     def _get_base_info(self,ttid):
         """
@@ -122,7 +129,7 @@ class IMDB(callbacks.Plugin):
             Including: Title,Year,Rating,Genre,Country,Runtime
         """
         url=r'http://www.imdb.com/title/%s'%ttid
-        movie=urllib.urlopen(url)
+        movie=self._urlopen(url)
         result={ }
            
         # parsing the html
@@ -163,7 +170,10 @@ class IMDB(callbacks.Plugin):
     def _get_limited_info(self,ttid):
         # for limited info
         url=r'http://www.imdb.com/title/%s/reaseinfo'%ttid
-        input=urllib.urlopen(url)
+        try:
+            input=self._urlopen(url)
+        except:
+            return ""
         data=input.read()
         input.close()
         limitedinfo=self.regex_limited.findall(data)
@@ -175,7 +185,10 @@ class IMDB(callbacks.Plugin):
         
     def _get_screen_info(self,ttid):
         url=r'http://www.imdb.com/title/%s/business'%ttid
-        input=urllib.urlopen(url)
+        try:
+            input=self._urlopen(url)
+        except:
+            return ""
         bussiness_data=input.read()
         ow_start=bussiness_data.find(r'<h5>Opening Weekend</h5>')+len(r'<h5>Opening Weekend</h5>')
         ow_end=bussiness_data.find('<h5>',ow_start)
@@ -199,8 +212,8 @@ class IMDB(callbacks.Plugin):
         
         try:
             base=self._get_base_info(ttid)
-            limited=self._get_limited_info(ttid)
             screens=self._get_screen_info(ttid)
+            limited=self._get_limited_info(ttid)
             irc.reply("07[Name: %s] [Year: %s] [Countries: %s] [Genres: %s] [Runtimes: %s] [Rating: %s] [Limited: %s] [Screens: %s ]" %
                         (base['Title'],base['Year'],base['Country'],base['Genre'],base['Runtime'], base['Rating'], limited,screens)) 
             irc.reply("12[URL: http://www.imdb.com/title/%s ]"%ttid  )         
