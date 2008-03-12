@@ -61,10 +61,11 @@ class IMDB(callbacks.Plugin):
         self.rx_title=re.compile(r'<title>(.*?) \((\d{4})\)</title>', re.I)
         self.rx_rating=re.compile(r'<b>(\d\.\d)/10</b>.*\(<a href="ratings">([0-9,]+) votes</a>\)',re.I)
         
-        self.rx_h5=re.compile(r'<h5>(Genre|Runtime|Country):</h5>',re.I)
+        self.rx_h5=re.compile(r'<h5>(Genre|Runtime|Language|Country):</h5>',re.I)
         self.h5_rxs={
                      'Genre':re.compile(r'\/Sections\/Genres\/.*?\/">(.*?)</a>',re.I),
                      'Runtime':re.compile(r'\d+ min',re.I),
+                     'Language':re.compile(r'\/Sections\/Languages\/.*?\/">(.*?)</a>',re.I),
                      'Country':re.compile(r'\/Sections\/Countries\/.*?\/">(.*?)</a>',re.I)
                     }
 
@@ -157,11 +158,11 @@ class IMDB(callbacks.Plugin):
                 if m!=None:
                     h5_type=m.group(1)
                     data=movie.readline()
-                    result[h5_type]='|'.join(self.h5_rxs[h5_type].findall(data))
+                    result[h5_type]='/'.join(self.h5_rxs[h5_type].findall(data))
             else:
                 # Break, if "Title,Year,Rating,Genre,Country,Runtime" are in the result,
                 # or end of the file reached
-                if len(result)==6 or rawline=='':
+                if len(result)==7 or rawline=='':
                     movie.close()
                     break
         
@@ -201,8 +202,12 @@ class IMDB(callbacks.Plugin):
                 screen_usa+=screens
             else:
                 screen_uk+=screens
+        
+        limited='No'
+        if screen_usa<500 or screen_uk<250:
+            limited='Yes'
                 
-        return "USA %d | UK %d"%(screen_usa,screen_uk)
+        return "USA %d / UK %d / %s"%(screen_usa,screen_uk,limited)
 
     def imdbtt(self,irc,msg,args,ttid):
         # check if the given ttid is in the proper format
@@ -213,12 +218,12 @@ class IMDB(callbacks.Plugin):
         try:
             base=self._get_base_info(ttid)
             screens=self._get_screen_info(ttid)
-            limited=self._get_limited_info(ttid)
-            irc.reply("07[Name: %s] [Year: %s] [Countries: %s] [Genres: %s] [Runtimes: %s] [Rating: %s] [Limited: %s] [Screens: %s ]" %
-                        (base['Title'],base['Year'],base['Country'],base['Genre'],base['Runtime'], base['Rating'], limited,screens)) 
+            #limited=self._get_limited_info(ttid)
+            irc.reply("07[Name: %s] [Year: %s] [Countries: %s] [Languages: %s] [Genres: %s] [Runtimes: %s] [Rating: %s] [Screens: %s ]" %
+                        (base['Title'],base['Year'],base['Country'],base['Language'],base['Genre'],base['Runtime'], base['Rating'], screens)) 
             irc.reply("12[URL: http://www.imdb.com/title/%s ]"%ttid  )         
         except:
-            irc.reply('Error, Please try lata.')
+            irc.reply('Error, Please try again lata.')
             traceback.print_exc()
             
     imdbtt=wrap(imdbtt,['text'])        
