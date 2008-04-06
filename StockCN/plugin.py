@@ -90,7 +90,7 @@ class StockCN(callbacks.Plugin):
         
         options=dict(options)
        
-        limit=0
+        limit=5 #return 5 results by default
         if options.has_key('limit'):
             limit=options['limit']
             if limit>10:
