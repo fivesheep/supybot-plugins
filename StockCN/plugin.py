@@ -99,8 +99,8 @@ class StockCN(callbacks.Plugin):
         try:
             eng=sina_finance.SearchEngine()
             results=eng.top10(ltype)
-            for item in results:
-                irc.reply(item.encode(self.encode))
+            for i in range(limit):
+                irc.reply(results[i].encode(self.encode))
         except :
             traceback.print_exc()
     
