@@ -104,13 +104,13 @@ class SearchEngine(Singleton):
         results=[]
         if SearchEngine.TOP_LISTS.has_key(key):
             qstr,fmtstr=SearchEngine.TOP_LISTS[key]
-            data=self.fetch_content(self.generate_suggest_url(qstr))
+            data=self.fetch_content(self.generate_data_url([qstr]))
             itemstrs=SearchEngine.TOP_DATA_PATT.findall(data)
             
             count=1
             for i in itemstrs:
-                item="[%d]"%count+fmtstr%(i.replace('"','').replace(' ','').split(','))
-                results.append(item)
+                item="[%d]"%count+fmtstr%tuple(i.replace('"','').replace(' ','').split(','))
+                results.append(item.replace('$P','%'))
                 count+=1
         
         return results
@@ -125,11 +125,14 @@ if __name__=='__main__':
 #    for s in sugg:
 #        print s.encode('gbk')
         
-    items=eng.search(['600001','600050','699999'])
-    for i in items:
-        print ("%s"%i).encode('gbk')
-    
-    items=eng.search(['000001','hdgt','sfz','0981','hkd','hkyn','cu0711'])
-    for i in items:
-        print ("%s"%i).encode('gbk')
+#    items=eng.search(['600001','600050','699999'])
+#    for i in items:
+#        print ("%s"%i).encode('gbk')
+#    
+#    items=eng.search(['000001','hdgt','sfz','0981','hkd','hkyn','cu0711'])
+#    for i in items:
+#        print ("%s"%i).encode('gbk')
+
+    results=eng.top10('shu')
+    print len(results)
         
