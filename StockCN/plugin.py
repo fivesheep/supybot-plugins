@@ -104,7 +104,7 @@ class StockCN(callbacks.Plugin):
         except :
             traceback.print_exc()
     
-    top10=wrap(top10,['something'],getopts({'limit':'int'}))    
+    top10=wrap(top10,['something',getopts({'limit':'int'})])    
 
 
 Class = StockCN
