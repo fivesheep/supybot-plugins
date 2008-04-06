@@ -94,6 +94,8 @@ class OnlineStore(callbacks.Plugin):
             
         if options.has_key('manufacturer'):
             parameters['wfacturer']=options['manufacturer']
+        elif options.has_key('mf'):
+            parameters['wfacturer']=options['mf']
            
         if options.has_key('page'):
             parameters['page']=str(options['page'])
@@ -107,7 +109,7 @@ class OnlineStore(callbacks.Plugin):
         parameters_string='&'.join([ '='.join(item) for item in parameters.items() ])
         url=r"http://www.360buy.com/warelist.asp?"+parameters_string.decode(self.encoding).encode('gbk')
 
-        # 2. Fecth the searching result from the internet
+        # 2. Fetch the searching result from the internet
         resp=urllib.urlopen(url)
         data=resp.read().decode('gbk')
         resp.close()
@@ -133,6 +135,7 @@ class OnlineStore(callbacks.Plugin):
                 getopts({'fromprice':'int',
                          'toprice':'int',
                          'manufacturer':'something',
+                         'mf':'something',
                          'order-by-price':'something',
                          'order-by-manufacturer':'something',
                          'page':'int'})])

@@ -79,6 +79,32 @@ class StockCN(callbacks.Plugin):
     
     index=wrap(index)
 
+    def top10 (self, irc, msg, args,ltype,options):
+        """<ltype> [--{limit} num]
+        
+        Displaying the Top10 Lists. 
+        ltype is the top10 type to show, it should be one of the following strings: 
+        'shu,shd,szu,szd,shv,sha,szv,sza,wu,wd,bu,bd,fu,fd'
+        --limit num of items to show, from 1 - 10
+        """
+        
+        options=dict(options)
+       
+        limit=0
+        if options.has_key('limit'):
+            limit=options['limit']
+            if limit>10:
+                limit=10
+        
+        try:
+            eng=sina_finance.SearchEngine()
+            results=eng.top10(ltype)
+            for item in results:
+                irc.reply(item)
+        except :
+            traceback.print_exc()
+    
+    top10=wrap(top10,['something'],getopts({'limit':'int'}))    
 
 
 Class = StockCN

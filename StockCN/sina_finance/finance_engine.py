@@ -17,6 +17,23 @@ class SearchEngine(Singleton):
     DATA_URL=r'http://hq.sinajs.cn/list=%s'
     SUGG_PATT=re.compile(r'everydata\[\d+\]=".*\t([a-z]+-[a-z0-9]+-.*)";', re.I)
     DATA_PATT=re.compile(r'var hq_str_.*?="(.*?)";', re.I)
+    TOP_DATA_PATT=re.compile(r'\["[a-z]*(\d+", ".*?", -?[\d\.]+, [\d\.]+)\],?',re.I)
+    
+    TOP_LISTS={'shu':('stock_sh_up_d_10',u'代码: %s, 名称: %s, 涨幅: %s$P, 当前价格: %s'),
+               'shd':('stock_sh_down_d_10',u'代码: %s, 名称: %s, 跌幅: %s$P, 当前价格: %s'),
+               'szu':('stock_sz_up_d_10',u'代码: %s, 名称: %s, 涨幅%s$P, 当前价格: %s'),
+               'szd':('stock_sz_down_d_10',u'代码: %s, 名称: %s, 跌幅: %s$P, 当前价格: %s'),
+               'shv':('stock_sh_volume_d_10',u'代码: %s, 名称: %s, 成交量: %s手, 当前价格: %s'),
+               'sha':('stock_sh_amount_d_10',u'代码: %s, 名称: %s, 成交量: %s万元, 当前价格: %s'),
+               'szv':('stock_sz_volume_d_10',u'代码: %s, 名称: %s, 成交量: %s手, 当前价格: %s'),
+               'sza':('stock_sz_amount_d_10',u'代码: %s, 名称: %s, 成交量: %s万元, 当前价格: %s'),
+               'wu':('warrant_up_d_10',u'代码: %s, 名称: %s, 涨幅: %s$P, 当前价格: %s'),
+               'wd':('warrant_down_d_10',u'代码: %s, 名称: %s, 涨幅: %s$P, 当前价格: %s'),
+               'bu':('stock_b_up_d_10',u'代码: %s, 名称: %s, 涨幅: %s$P, 当前价格: %s'),
+               'bd':('stock_b_down_d_10',u'代码: %s, 名称: %s, 涨幅: %s$P, 当前价格: %s'),
+               'fu':('fund_up_d_10',u'代码: %s, 名称: %s, 涨幅: %s$P, 当前价格: %s'),
+               'fd':('fund_down_d_10',u'代码: %s, 名称: %s, 涨幅: %s$P, 当前价格: %s')
+               }
         
     def __init__(self):
         pass
@@ -82,6 +99,25 @@ class SearchEngine(Singleton):
         feeded_items=self.feed_all(items)
         # 4. return the finance items
         return feeded_items
+    
+    def top10(self,key):
+        results=[]
+        if SearchEngine.TOP_LISTS.has_key(key):
+            qstr,fmtstr=SearchEngine.TOP_LISTS[key]
+            data=self.fetch_content(self.generate_suggest_url(qstr))
+            itemstrs=SearchEngine.TOP_DATA_PATT.findall(data)
+            
+            count=1
+            for i in itemstrs:
+                item="[%d]"%count+fmtstr%(i.replace('"','').replace(' ','').split(','))
+                results.append(item)
+                count+=1
+        
+        return results
+            
+    def index(self):    
+        pass
+        
     
 if __name__=='__main__':
     eng=SearchEngine()
