@@ -58,7 +58,7 @@ class IMDB(callbacks.Plugin):
         self.regex_limited=re.compile(r'<tr><td><b><a href="/Recent/USA">USA</a></b></td>\r?\n    <td align="right"><a href=".*?">(.*?)</a> <a href=".*?">(\d{4})</a></td>\r?\n    <td> \(limited\)</td></tr>',re.MULTILINE)
         self.regex_screens=re.compile(r'\d+ \((USA|UK)\) \(<a.*?a>\) \(([0-9,]+) Screens?\)',re.I)
         self.rx_tt=re.compile(r'tt\d{4,}',re.I)
-        self.rx_title=re.compile(r'<title>(.*?) \((\d{4})\)</title>', re.I)
+        self.rx_title=re.compile(r'<title>(.*?) \((\d{4})\).*?</title>', re.I)
         self.rx_rating=re.compile(r'<b>(\d\.\d)/10</b>.*\(<a href="ratings">([0-9,]+) votes</a>\)',re.I)
         
         self.rx_h5=re.compile(r'<h5>(Genre|Runtime|Language|Country):</h5>',re.I)
@@ -131,7 +131,15 @@ class IMDB(callbacks.Plugin):
         """
         url=r'http://www.imdb.com/title/%s'%ttid
         movie=self._urlopen(url)
-        result={ }
+        result={ 
+                'Title':'',
+                'Year':'',
+                'Country':'',
+                'Language':'',
+                'Genre':'',
+                'Runtime':'', 
+                'Rating':''
+                }
            
         # parsing the html
         while(1):
