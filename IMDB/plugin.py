@@ -131,15 +131,7 @@ class IMDB(callbacks.Plugin):
         """
         url=r'http://www.imdb.com/title/%s'%ttid
         movie=self._urlopen(url)
-        result={ 
-                'Title':'',
-                'Year':'',
-                'Country':'',
-                'Language':'',
-                'Genre':'',
-                'Runtime':'', 
-                'Rating':''
-                }
+        result={}
            
         # parsing the html
         while(1):
@@ -173,6 +165,11 @@ class IMDB(callbacks.Plugin):
                 if len(result)==7 or rawline=='':
                     movie.close()
                     break
+        
+        attrs=['Title','Year','Country','Language','Genre','Runtime','Rating']
+        for attr in attrs:
+            if not result.has_key(attr):
+                result[attr]=''
         
         return result
     
