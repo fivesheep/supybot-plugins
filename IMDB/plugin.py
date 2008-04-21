@@ -209,7 +209,12 @@ class IMDB(callbacks.Plugin):
                 screen_uk+=screens
         
         limited='No'
-        if screen_usa<500 or screen_uk<250:
+        
+        if screen_usa==0 and screen_uk>=250:
+            limited='No'
+        elif screen_usa>=500 and screen_uk==0:
+            limited='No'            
+        elif screen_usa<500 or screen_uk<250:
             limited='Yes'
                 
         return "USA %d / UK %d / %s"%(screen_usa,screen_uk,limited)
