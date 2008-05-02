@@ -65,8 +65,8 @@ class IMDB(callbacks.Plugin):
         self.h5_rxs={
                      'Genre':re.compile(r'\/Sections\/Genres\/.*?\/">(.*?)</a>',re.I),
                      'Runtime':re.compile(r'\d+ min',re.I),
-                     'Language':re.compile(r'\/Sections\/Languages\/.*?\/">(.*?)</a>',re.I),
-                     'Country':re.compile(r'\/Sections\/Countries\/.*?\/">(.*?)</a>',re.I)
+                     'Language':re.compile(r'\/Sections\/Languages\/(.*?)\/">',re.I),
+                     'Country':re.compile(r'\/Sections\/Countries\/(.*?)\/">',re.I)
                     }
 
     # def imdb(self,irc,msg,args,movie):
@@ -153,19 +153,28 @@ class IMDB(callbacks.Plugin):
                     result['Rating']="%s/10 of %s votes"%(m.group(1),m.group(2))
                 else:
                     result['Rating']=None
-            elif line.startswith('<h5>'):
-                m=self.rx_h5.match(line)
-                if m!=None:
+            elif line.startswith(r'<div class="info">'): 
+                h5=movie.readline()
+                m=self.rx_h5.match(h5)
+                info=[]
+                
+                if m:
                     h5_type=m.group(1)
-                    data=movie.readline()
-                    result[h5_type]='/'.join(self.h5_rxs[h5_type].findall(data))
+                        
+                    while(1):
+                        infoLine=movie.readline()
+                        if infoLine.startswith('</div>'):
+                            break
+                        info.extend(self.h5_rxs[h5_type].findall(infoLine))
+                    
+                    result[h5_type]='/'.join(info)
             else:
                 # Break, if "Title,Year,Rating,Genre,Country,Runtime" are in the result,
                 # or end of the file reached
                 if len(result)==7 or rawline=='':
                     movie.close()
                     break
-        
+        print result
         attrs=['Title','Year','Country','Language','Genre','Runtime','Rating']
         for attr in attrs:
             if not result.has_key(attr):
