@@ -120,7 +120,7 @@ class SCN(callbacks.Plugin):
     def mp3(self,irc,msg,args,qstrs):
         results=self._search(qstrs,'MP3')
         self._print_result(irc,results)
-    divx=wrap(mp3,[many('something')])
+    mp3=wrap(mp3,[many('something')])
 
     def book(self,irc,msg,args,qstrs):
         results=self._search(qstrs,'EBOOK')
