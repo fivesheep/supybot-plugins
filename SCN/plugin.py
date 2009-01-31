@@ -38,6 +38,9 @@ import re
 import urllib
 import urllib2
 
+import socket
+socket.setdefaulttimeout(15)
+
 class SCN(callbacks.Plugin):
     """This plugin is for searching 0day stuffs.
     This should describe *how* to use this plugin."""
