@@ -39,11 +39,11 @@ import urllib
 import urllib2
 
 class SCN(callbacks.Plugin):
-    """Add the help for "@plugin help SCN" here
+    """This plugin is for searching 0day stuffs.
     This should describe *how* to use this plugin."""
     threaded = True
     CATALOGS=['0DAY','XVID','DVDR','X264','BLURAY','TV','XXX','MP3','APPS','GAMES',
-              'CONSOLE','HH','MVID','EBOOK','DOX','UNKNOWN']
+              'CONSOLE','HANDHELD','MVID','EBOOK','DOX','UNKNOWN','PSP','NDS','PDA']
     BASE_URL=r'http://pre.scnsrc.net/index.php?search='
     DATA_PATTERN=re.compile(r'<tr><td width="180"> (....-..-..) ..:..:.. </td><td class=".*?"> (.*?) </td><td>(.*?)(</img>| )?(<a.*?</a>)?</td></tr>')
     NFO_URL_PATTERN=re.compile(r'href="(http.*?)"')
@@ -73,7 +73,7 @@ class SCN(callbacks.Plugin):
             result={}
             result['date']=i.group(1)
             result['catalog']=i.group(2)
-            result['name']=i.group(3)
+            result['name']=i.group(3).split(' ')[0]
             if i.group(5)!=None and len(i.group(5))>5:
                 result['nfo']=SCN.NFO_URL_PATTERN.findall(i.group(5))[0]
             else:
@@ -112,20 +112,41 @@ class SCN(callbacks.Plugin):
         self._print_result(irc,results)
     apps=wrap(apps,[many('something')])
 
-    def divx(self,irc,msg,args,qstrs):
-        results=self._search(qstrs,'DIVX')
+    def movie(self,irc,msg,args,qstrs):
+        results=self._search(qstrs,'XVID')
         self._print_result(irc,results)
-    divx=wrap(divx,[many('something')])
+    movie=wrap(movie,[many('something')])
     
     def mp3(self,irc,msg,args,qstrs):
         results=self._search(qstrs,'MP3')
         self._print_result(irc,results)
     mp3=wrap(mp3,[many('something')])
 
-    def book(self,irc,msg,args,qstrs):
+    def ebook(self,irc,msg,args,qstrs):
         results=self._search(qstrs,'EBOOK')
         self._print_result(irc,results)
-    book=wrap(book,[many('something')])
+    ebook=wrap(ebook,[many('something')])
+
+    def nds(self,irc,msg,args,qstrs):
+        results=self._search(qstrs,'NDS')
+        self._print_result(irc,results)
+    nds=wrap(nds,[many('something')])
+
+    def psp(self,irc,msg,args,qstrs):
+        results=self._search(qstrs,'PSP')
+        self._print_result(irc,results)
+    psp=wrap(psp,[many('something')])
+
+    def pda(self,irc,msg,args,qstrs):
+        results=self._search(qstrs,'PDA')
+        self._print_result(irc,results)
+    pda=wrap(pda,[many('something')])
+
+    def games(self,irc,msg,args,qstrs):
+        results=self._search(qstrs,'GAMES')
+        self._print_result(irc,results)
+    games=wrap(games,[many('something')])
+
 
 Class = SCN
 
