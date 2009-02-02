@@ -76,7 +76,7 @@ class SCN(callbacks.Plugin):
             if line.startswith('<table>') and line.find('</table>') == -1:
                 # begin to read releases data
                 for i in range(limit):
-                    release_info=resp.readline.rstrip('\n')
+                    release_info=resp.readline().rstrip('\n')
                     m=SCN.DATA_PATTERN.match(release_info)
                     if m:
                         result={}
