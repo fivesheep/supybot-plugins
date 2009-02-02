@@ -131,7 +131,7 @@ class SCN(callbacks.Plugin):
         """
         results=self._search(qstrs,'0DAY')
         self._print_result(irc,results)
-    zday=wrap(zd,[any('something')])
+    zday=wrap(zday,[any('something')])
 
     def apps(self,irc,msg,args,qstrs):
         """[keyword]...
