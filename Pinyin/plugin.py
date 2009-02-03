@@ -35,7 +35,7 @@ import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
 
 from bsddb import db
-
+from os import path
 
 class Pinyin(callbacks.Plugin):
     """Add the help for "@plugin help Pinyin" here
@@ -46,7 +46,8 @@ class Pinyin(callbacks.Plugin):
         self.__parent=super(Pinyin,self)
         self.__parent.__init__(irc)
         self.pydb=db.DB()
-        self.pydb.open('pinyin.db', None, db.DB_HASH, db.DB_RDONLY)
+        dbpath=path.join(path.dirname(path.realpath(__file__)),'pinyin.db')
+        self.pydb.open(dbpath, None, db.DB_HASH, db.DB_RDONLY)
         
 
     def pinyin(self, irc, msg, args, chars):
