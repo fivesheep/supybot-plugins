@@ -66,7 +66,7 @@ class Hanzi(callbacks.Plugin):
         result="Make sure you have input a chinese string"
         items=[]
         for c in chars:
-            p=self.pydb.get(c)
+            p=self.pydb.get(c.encode(Hanzi.DB_ENCODING))
             if p != None:
                 p=p.decode(Hanzi.DB_ENCODING)
                 items.append('%s: %s'%(c,p))
@@ -85,7 +85,7 @@ class Hanzi(callbacks.Plugin):
         """
         chars=chars.decode(Hanzi.CHANNEL_ENCODING)
         result="Make sure you have input a chinese string"
-        tmp=self.wbdb.get(chars)
+        tmp=self.wbdb.get(chars.encode(Hanzi.DB_ENCODING))
         if tmp:
             result=chars+': '+tmp.decode(Hanzi.DB_ENCODING)
         elif len(chars)>1:
