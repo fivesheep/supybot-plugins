@@ -51,6 +51,7 @@ class Hanzi(callbacks.Plugin):
         self.__parent=super(Hanzi,self)
         self.__parent.__init__(irc)
         self.pydb=db.DB()
+        self.wbdb=db.DB()
         pydbpath=path.join(Hanzi.BASE_PATH,'pinyin.db')
         wbdbpath=path.join(Hanzi.BASE_PATH,'wubi.db')
         self.pydb.open(pydbpath, None, db.DB_HASH, db.DB_RDONLY)
