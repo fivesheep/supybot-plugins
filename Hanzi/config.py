@@ -28,49 +28,24 @@
 
 ###
 
-import supybot.utils as utils
-from supybot.commands import *
-import supybot.plugins as plugins
-import supybot.ircutils as ircutils
-import supybot.callbacks as callbacks
+import supybot.conf as conf
+import supybot.registry as registry
 
-from bsddb import db
-from os import path
+def configure(advanced):
+    # This will be called by supybot to configure this module.  advanced is
+    # a bool that specifies whether the user identified himself as an advanced
+    # user or not.  You should effect your configuration by manipulating the
+    # registry as appropriate.
+    from supybot.questions import expect, anything, something, yn
+    conf.registerPlugin('Hanzi', True)
 
-class Pinyin(callbacks.Plugin):
-    """Add the help for "@plugin help Pinyin" here
-    This should describe *how* to use this plugin."""
-    pass
 
-    def __init__(self,irc):
-        self.__parent=super(Pinyin,self)
-        self.__parent.__init__(irc)
-        self.pydb=db.DB()
-        dbpath=path.join(path.dirname(path.realpath(__file__)),'pinyin.db')
-        self.pydb.open(dbpath, None, db.DB_HASH, db.DB_RDONLY)
-        
+Hanzi = conf.registerPlugin('Hanzi')
+# This is where your configuration variables (if any) should go.  For example:
+# conf.registerGlobalValue(Hanzi, 'someConfigVariableName',
+#     registry.Boolean(False, """Help for someConfigVariableName."""))
 
-    def pinyin(self, irc, msg, args, chars):
-        """<chinese words>
-        
-        Lookup the pinyins for the given chinese chars.
-        """
-        results=[]
-        for c in chars:
-            p=self.pydb.get(c)
-            if p != None:
-                results.append('%s: %s'%(c,p))
-
-        if len(results) > 0:
-            irc.reply(' | '.join(results))
-        else:
-            irc.reply('Make sure "%s" is a chinese string'%chars)
-
-    pinyin=wrap(pinyin,['something'])
-
-        
-
-Class = Pinyin
-
+conf.registerGlobalValue(Hanzi, 'encoding',
+    registry.String('utf-8',"""The charest used in the channels"""))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

@@ -1,3 +1,4 @@
+# coding=utf-8
 ###
 # Copyright (c) 2009, Young Ng
 # All rights reserved.
@@ -30,8 +31,11 @@
 
 from supybot.test import *
 
-class PinyinTestCase(PluginTestCase):
-    plugins = ('Pinyin',)
+class HanziTestCase(PluginTestCase):
+    plugins = ('Hanzi',)
+
+    def testPinyin(self):
+        self.assertNotError('pinyin 你')
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
