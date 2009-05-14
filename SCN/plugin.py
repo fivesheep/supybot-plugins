@@ -83,22 +83,25 @@ class SCN(callbacks.Plugin):
         results=[]
         url=SCN.BASE_URL
         url+='&cat=%d&lang=%d&from=%s&to=%s&inc=%s&exc=%s'%(cat,lang,start,end,'+'.join(qstrs),exclude)
+        success=0
 
         try:
             resp=self._urlopen(url)
             data=resp.read()
             results=SCN.PATTERN.findall(data)
             results.reverse()
-            self._print_result(results)
+            success=1
         except:
-            irc.reply('Unable to connect to remote server or connection timeout, please retry later.')
+            success=-1
         finally:
             resp.close()
 
-        return results
+        return success,results
 
-    def _print_result(self,irc,results):
-        if len(results)==0:
+    def _print_result(self,irc,code,results):
+        if code == -1:
+            irc.reply('Unable to connect to remote server or connection timeout, please retry later.')
+        elif len(results)==0:
             irc.reply('Sorry, No results were found!')
         else:
             count=5
@@ -157,7 +160,8 @@ class SCN(callbacks.Plugin):
         else:
             lang=1
 
-        self._search(qstrs,cat,start,end,exclude,lang)
+        code,results=self._search(qstrs,cat,start,end,exclude,lang)
+        self._print_result(irc,code,results)
 
     pre=wrap(pre,[getopts({'cat':'something', 'start':'something', 'end':'something', 'exclude':'something', 'all-lang':''}),any('something')])
 
@@ -170,7 +174,8 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(90)
-        self._search(qstrs,SCN.CATALOGS['0DAY'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=(qstrs,SCN.CATALOGS['0DAY'],start,time.strftime('%Y-%m-%d'),'',0)
+        self._print_result(irc,code,results)
     zday=wrap(zday,[any('something')])
 
     def apps(self,irc,msg,args,qstrs):
@@ -182,7 +187,8 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(90)
-        self._search(qstrs,SCN.CATALOGS['ISO'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=(qstrs,SCN.CATALOGS['ISO'],start,time.strftime('%Y-%m-%d'),'',0)
+        self._print_result(irc,code,results)
     apps=wrap(apps,[any('something')])
 
     def movie(self,irc,msg,args,qstrs):
@@ -194,7 +200,8 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(30)
-        self._search(qstrs,SCN.CATALOGS['DIVX']+SCN.CATALOGS['DVDR'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=(qstrs,SCN.CATALOGS['DIVX']+SCN.CATALOGS['DVDR'],start,time.strftime('%Y-%m-%d'),'',0)
+        self._print_result(irc,code,results)
     movie=wrap(movie,[any('something')])
     
     def mp3(self,irc,msg,args,qstrs):
@@ -206,7 +213,8 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(30)
-        self._search(qstrs,SCN.CATALOGS['MP3'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=(qstrs,SCN.CATALOGS['MP3'],start,time.strftime('%Y-%m-%d'),'',0)
+        self._print_result(irc,code,results)
     mp3=wrap(mp3,[any('something')])
 
     def ebook(self,irc,msg,args,qstrs):
@@ -218,7 +226,8 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(90)
-        self._search(qstrs,SCN.CATALOGS['EBOOK'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=(qstrs,SCN.CATALOGS['EBOOK'],start,time.strftime('%Y-%m-%d'),'',0)
+        self._print_result(irc,code,results)
     ebook=wrap(ebook,[any('something')])
 
     def pda(self,irc,msg,args,qstrs):
@@ -230,7 +239,8 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(90)
-        self._search(qstrs,SCN.CATALOGS['PDA'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=(qstrs,SCN.CATALOGS['PDA'],start,time.strftime('%Y-%m-%d'),'',0)
+        self._print_result(irc,code,results)
     pda=wrap(pda,[any('something')])
 
     def ustv(self,irc,msg,args,qstrs):
@@ -242,7 +252,8 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(30)
-        self._search(qstrs,SCN.CATALOGS['TV'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=(qstrs,SCN.CATALOGS['TV'],start,time.strftime('%Y-%m-%d'),'',0)
+        self._print_result(irc,code,results)
     ustv=wrap(ustv,[any('something')])
 
     def console(self,irc,msg,args,qstrs):
@@ -254,7 +265,8 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(90)
-        self._search(qstrs,SCN.CATALOGS['CONSOLE'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=(qstrs,SCN.CATALOGS['CONSOLE'],start,time.strftime('%Y-%m-%d'),'',0)
+        self._print_result(irc,code,results)
     console=wrap(console,[any('something')])
 
 Class = SCN
