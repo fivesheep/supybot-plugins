@@ -37,20 +37,39 @@ import supybot.callbacks as callbacks
 import re
 import urllib
 import urllib2
+import time
 
 import socket
 socket.setdefaulttimeout(15)
+
+def generate_date_str(dst):
+    sec=time.mktime(time.localtime())-dst*24*60*60
+    return time.strftime('%Y-%m-%d',time.localtime(sec))
 
 class SCN(callbacks.Plugin):
     """This plugin is for searching 0day stuffs.
     This should describe *how* to use this plugin."""
     threaded = True
-    CATALOGS=['0DAY','XVID','DVDR','X264','BLURAY','TV','XXX','MP3','APPS','GAMES',
-              'CONSOLE','HANDHELD','MVID','EBOOK','DOX','UNKNOWN','PSP','NDS','PDA']
-    BASE_URL=r'http://pre.scnsrc.net/index.php?search='
-    DATA_PATTERN=re.compile(r'<tr><td width="180"> (....-..-..) ..:..:.. </td><td class=".*?"> (.*?) </td><td>(.*?)(</img>| )?(<a.*?</a>)?</td></tr>')
-    NFO_URL_PATTERN=re.compile(r'href="(http.*?)"')
-    NUM_OF_RESULTS=5
+    BASE_URL=r'http://www.doopes.com/?num=2&mode=0&opt=0'
+    PATTERN=re.compile(r'<tr.*?><td>(\d{4}-\d{2}-\d{2}) \d{2}:\d{2}:\d{2}<td>(.*?)<td>([^< \n]*)', re.I)
+    
+    CATALOGS={
+        "ISO" : 512,
+        "0DAY" : 2,
+        "PDA" : 8192,
+        "EBOOK" : 128,
+        "IMAGESET" : 256,
+        "CONSOLE" : 16,
+        "VCD" : 131072,
+        "SVCD" : 16384,
+        "DIVX" : 32,
+        "DVDR" : 64,
+        "ANIME" : 4,
+        "TV" : 32768,
+        "XXX" : 262144,
+        "MP3" : 2048,
+        "MV" : 1
+    }
 
     def __init__(self,irc):
         self.__parent=super(SCN,self)
@@ -60,77 +79,98 @@ class SCN(callbacks.Plugin):
         req=urllib2.Request(url,None,{'User-agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2)'})
         return urllib2.urlopen(req)
 
-    def _search(self,qstrs,cat=None,limit=5):
-        url=SCN.BASE_URL
+    def _search(self,qstrs,cat,start,end,exclude,lang):
         results=[]
-        if len(qstrs)!=0:
-            url+='+'.join(qstrs)
-        if cat != None and cat in SCN.CATALOGS:
-            url+='&cat='+cat
-        resp=self._urlopen(url)
-        while(1):
-            line=resp.readline()
-            if line=='':
-                # reach the end of the remote data.
-                break    
-            if line.startswith('<table>') and line.find('</table>') == -1:
-                # begin to read releases data
-                for i in range(limit):
-                    release_info=resp.readline().rstrip('\n')
-                    m=SCN.DATA_PATTERN.match(release_info)
-                    if m:
-                        result={}
-                        result['date']=m.group(1)
-                        result['catalog']=m.group(2)
-                        result['name']=m.group(3).split(' ')[0]
-                        if m.group(5)!=None and len(m.group(5))>5:
-                            result['nfo']=SCN.NFO_URL_PATTERN.findall(m.group(5))[0]
-                        else:
-                            result['nfo']=''
-                        results.append(result)
-                break
-                                                
-        resp.close()
+        url=SCN.BASE_URL
+        url+='&cat=%d&lang=%d&from=%s&to=%s&inc=%s&exc=%s'%(cat,lang,start,end,'+'.join(qstrs),exclude)
+
+        try:
+            resp=self._urlopen(url)
+            data=resp.read()
+            results=SCN.PATTERN.findall(data)
+            results.reverse()
+            self._print_result(results)
+        except:
+            irc.reply('Unable to connect to remote server or connection timeout, please retry later.')
+        finally:
+            resp.close()
+
         return results
 
     def _print_result(self,irc,results):
         if len(results)==0:
-            irc.reply('Sorry, Nothing Found!')
+            irc.reply('Sorry, No results were found!')
         else:
+            count=5
             for i in results:
-                irc.reply('[%s] %s %s | NFO: %s'%(i['date'],i['catalog'],i['name'],i['nfo']))
+                irc.reply('[%s] %s %s'%i)
+                count-=1
+                if count == 0:
+                    break
 
     def pre(self,irc,msg,args,options,qstrs):
         """[OPTION]... [keyword]...
         
         Search Scene releases via pre.scnsrc.net. Searching options including: 
-        --limit the max num of the returning results, it's 5 by default; 
         --cat the catalog of the releases, it's value could be one of the 
-              following: xvid,dvdr,x264,bluray,tv,xxx, mp3, 0day, apps, games, 
-                       console, handheld, mvid, ebook, dox, psp, nds, pda..
+              following: iso, 0day, pda, ebook, imageset, console, divx, dvdr, 
+              anime, tv, xxx, mp3, mv
+        --start the start date which format is YYYY-MM-DD.
+        --end the end date which format is YYYY-MM-DD.
+        --exclude exclude the items with the given keyword. 
+        --all-lang by default, it searches english items only.
         """
-        cat=None
         options=dict(options)
-        if options.has_key('cat'):
-            cat=options['cat'].upper()
-        if options.has_key('limit'):
-            limit=options['limit']
+
+        if options.has_key('cat') and SCN.CATALOGS.has_key(options.has_key('cat').upper()):
+            cat=SCN.CATALOGS.has_key(options.has_key('cat').upper())
         else:
-            limit=SCN.NUM_OF_RESULTS
+            cat=2 #0day
+
+        if options.has_key('start'):
+            d=options['start']
+            if re.match(r'^\d{4}-\d{2}-\d{2}$',d):
+                start=d
+            else:
+                irc.reply('Date must be in the format of YYYY-MM-DD')
+                return
+        else:
+            start=generate_date_str(30)
         
-        results=self._search(qstrs,cat,limit)
+        if options.has_key('end'):
+            d=options['end']
+            if re.match(r'^\d{4}-\d{2}-\d{2}$',d):
+                end=d
+            else:
+                irc.reply('Date must be in the format of YYYY-MM-DD')
+                return
+        else:
+            end=time.strftime('%Y-%m-%d')
 
-        self._print_result(irc,results)
+        if options.has_key('exclude'):
+            exclude=options['exclude']
+        else:
+            exclude=''
 
-    pre=wrap(pre,[getopts({'cat':'something', 'limit':'int'}),any('something')])
+        if options.has_key('all-lang'):
+            lang=0
+        else:
+            lang=1
+
+        self._search(qstrs,cat,start,end,exclude,lang)
+
+    pre=wrap(pre,[getopts({'cat':'something', 'start':'something', 'end':'something', 'exclude':'something', 'all-lang':''}),any('something')])
 
     def zday(self,irc,msg,args,qstrs):
         """[keyword]...
         
         Search for 0day releases.
         """
-        results=self._search(qstrs,'0DAY')
-        self._print_result(irc,results)
+        if len(qstrs)==0:
+            start=generate_date_str(1)
+        else:
+            start=generate_date_str(90)
+        self._search(qstrs,SCN.CATALOGS['0DAY'],start,time.strftime('%Y-%m-%d'),'',0)
     zday=wrap(zday,[any('something')])
 
     def apps(self,irc,msg,args,qstrs):
@@ -138,8 +178,11 @@ class SCN(callbacks.Plugin):
         
         Search for released apps.
         """
-        results=self._search(qstrs,'APPS')
-        self._print_result(irc,results)
+        if len(qstrs)==0:
+            start=generate_date_str(1)
+        else:
+            start=generate_date_str(90)
+        self._search(qstrs,SCN.CATALOGS['ISO'],start,time.strftime('%Y-%m-%d'),'',0)
     apps=wrap(apps,[any('something')])
 
     def movie(self,irc,msg,args,qstrs):
@@ -147,8 +190,11 @@ class SCN(callbacks.Plugin):
         
         Search for released movies(xvid).
         """
-        results=self._search(qstrs,'XVID')
-        self._print_result(irc,results)
+        if len(qstrs)==0:
+            start=generate_date_str(1)
+        else:
+            start=generate_date_str(30)
+        self._search(qstrs,SCN.CATALOGS['DIVX']+SCN.CATALOGS['DVDR'],start,time.strftime('%Y-%m-%d'),'',0)
     movie=wrap(movie,[any('something')])
     
     def mp3(self,irc,msg,args,qstrs):
@@ -156,8 +202,11 @@ class SCN(callbacks.Plugin):
         
         Search for released mp3s.
         """
-        results=self._search(qstrs,'MP3')
-        self._print_result(irc,results)
+        if len(qstrs)==0:
+            start=generate_date_str(1)
+        else:
+            start=generate_date_str(30)
+        self._search(qstrs,SCN.CATALOGS['MP3'],start,time.strftime('%Y-%m-%d'),'',0)
     mp3=wrap(mp3,[any('something')])
 
     def ebook(self,irc,msg,args,qstrs):
@@ -165,53 +214,47 @@ class SCN(callbacks.Plugin):
         
         Search for released ebooks.
         """
-        results=self._search(qstrs,'EBOOK')
-        self._print_result(irc,results)
+        if len(qstrs)==0:
+            start=generate_date_str(1)
+        else:
+            start=generate_date_str(90)
+        self._search(qstrs,SCN.CATALOGS['EBOOK'],start,time.strftime('%Y-%m-%d'),'',0)
     ebook=wrap(ebook,[any('something')])
-
-    def nds(self,irc,msg,args,qstrs):
-        """[keyword]...
-        
-        Search for released nds roms.
-        """
-        results=self._search(qstrs,'NDS')
-        self._print_result(irc,results)
-    nds=wrap(nds,[any('something')])
-
-    def psp(self,irc,msg,args,qstrs):
-        """[keyword]...
-        
-        Search for released psp roms.
-        """
-        results=self._search(qstrs,'PSP')
-        self._print_result(irc,results)
-    psp=wrap(psp,[any('something')])
 
     def pda(self,irc,msg,args,qstrs):
         """[keyword]...
         
         Search for released pda softwares including iphone, ipod apps.
         """
-        results=self._search(qstrs,'PDA')
-        self._print_result(irc,results)
+        if len(qstrs)==0:
+            start=generate_date_str(1)
+        else:
+            start=generate_date_str(90)
+        self._search(qstrs,SCN.CATALOGS['PDA'],start,time.strftime('%Y-%m-%d'),'',0)
     pda=wrap(pda,[any('something')])
 
-    def games(self,irc,msg,args,qstrs):
+    def ustv(self,irc,msg,args,qstrs):
         """[keyword]...
         
-        Search for released pc games.
+        Search for released tv programs.
         """
-        results=self._search(qstrs,'GAMES')
-        self._print_result(irc,results)
-    games=wrap(games,[any('something')])
+        if len(qstrs)==0:
+            start=generate_date_str(1)
+        else:
+            start=generate_date_str(30)
+        self._search(qstrs,SCN.CATALOGS['TV'],start,time.strftime('%Y-%m-%d'),'',0)
+    ustv=wrap(ustv,[any('something')])
 
     def console(self,irc,msg,args,qstrs):
         """[keyword]...
         
         Search for released console games (including ps2, ps3, xbox, wii....).
         """
-        results=self._search(qstrs,'CONSOLE')
-        self._print_result(irc,results)
+        if len(qstrs)==0:
+            start=generate_date_str(1)
+        else:
+            start=generate_date_str(90)
+        self._search(qstrs,SCN.CATALOGS['CONSOLE'],start,time.strftime('%Y-%m-%d'),'',0)
     console=wrap(console,[any('something')])
 
 Class = SCN
