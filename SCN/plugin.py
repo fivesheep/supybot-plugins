@@ -137,8 +137,10 @@ class SCN(callbacks.Plugin):
             else:
                 irc.reply('Date must be in the format of YYYY-MM-DD')
                 return
+        elif len(qstrs)==0 :
+            start=generate_date_str(1)
         else:
-            start=generate_date_str(30)
+            start=generate_date_str(90)
         
         if options.has_key('end'):
             d=options['end']
@@ -160,7 +162,7 @@ class SCN(callbacks.Plugin):
         else:
             lang=1
 
-        code,results=self._search(qstrs,cat,start,end,exclude,lang)
+        code,results=self._searchself._search(qstrs,cat,start,end,exclude,lang)
         self._print_result(irc,code,results)
 
     pre=wrap(pre,[getopts({'cat':'something', 'start':'something', 'end':'something', 'exclude':'something', 'all-lang':''}),any('something')])
@@ -174,7 +176,7 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(90)
-        code,results=(qstrs,SCN.CATALOGS['0DAY'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=self._search(qstrs,SCN.CATALOGS['0DAY'],start,time.strftime('%Y-%m-%d'),'',0)
         self._print_result(irc,code,results)
     zday=wrap(zday,[any('something')])
 
@@ -187,7 +189,7 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(90)
-        code,results=(qstrs,SCN.CATALOGS['ISO'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=self._search(qstrs,SCN.CATALOGS['ISO'],start,time.strftime('%Y-%m-%d'),'',0)
         self._print_result(irc,code,results)
     apps=wrap(apps,[any('something')])
 
@@ -200,7 +202,7 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(30)
-        code,results=(qstrs,SCN.CATALOGS['DIVX']+SCN.CATALOGS['DVDR'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=self._search(qstrs,SCN.CATALOGS['DIVX']+SCN.CATALOGS['DVDR'],start,time.strftime('%Y-%m-%d'),'',0)
         self._print_result(irc,code,results)
     movie=wrap(movie,[any('something')])
     
@@ -213,7 +215,7 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(30)
-        code,results=(qstrs,SCN.CATALOGS['MP3'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=self._search(qstrs,SCN.CATALOGS['MP3'],start,time.strftime('%Y-%m-%d'),'',0)
         self._print_result(irc,code,results)
     mp3=wrap(mp3,[any('something')])
 
@@ -226,7 +228,7 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(90)
-        code,results=(qstrs,SCN.CATALOGS['EBOOK'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=self._search(qstrs,SCN.CATALOGS['EBOOK'],start,time.strftime('%Y-%m-%d'),'',0)
         self._print_result(irc,code,results)
     ebook=wrap(ebook,[any('something')])
 
@@ -239,7 +241,7 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(90)
-        code,results=(qstrs,SCN.CATALOGS['PDA'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=self._search(qstrs,SCN.CATALOGS['PDA'],start,time.strftime('%Y-%m-%d'),'',0)
         self._print_result(irc,code,results)
     pda=wrap(pda,[any('something')])
 
@@ -252,7 +254,7 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(30)
-        code,results=(qstrs,SCN.CATALOGS['TV'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=self._search(qstrs,SCN.CATALOGS['TV'],start,time.strftime('%Y-%m-%d'),'',0)
         self._print_result(irc,code,results)
     ustv=wrap(ustv,[any('something')])
 
@@ -265,7 +267,7 @@ class SCN(callbacks.Plugin):
             start=generate_date_str(1)
         else:
             start=generate_date_str(90)
-        code,results=(qstrs,SCN.CATALOGS['CONSOLE'],start,time.strftime('%Y-%m-%d'),'',0)
+        code,results=self._search(qstrs,SCN.CATALOGS['CONSOLE'],start,time.strftime('%Y-%m-%d'),'',0)
         self._print_result(irc,code,results)
     console=wrap(console,[any('something')])
 
