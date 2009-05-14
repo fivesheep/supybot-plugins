@@ -162,7 +162,7 @@ class SCN(callbacks.Plugin):
         else:
             lang=1
 
-        code,results=self._searchself._search(qstrs,cat,start,end,exclude,lang)
+        code,results=self._search(qstrs,cat,start,end,exclude,lang)
         self._print_result(irc,code,results)
 
     pre=wrap(pre,[getopts({'cat':'something', 'start':'something', 'end':'something', 'exclude':'something', 'all-lang':''}),any('something')])
