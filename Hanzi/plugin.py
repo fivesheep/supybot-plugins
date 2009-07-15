@@ -125,14 +125,23 @@ class Hanzi(callbacks.Plugin):
     zhen=wrap(zhen,['text'])
 
     def enzh(self, irc, msg, args, text):
-        """<chinese sentence>
+        """<text>
         
-        Translate the given text from chinese to english via google tranlsator.
+        Translate the given text from english to chinese via google tranlsator.
         """
         result=self._translate('en|zh',text)
         irc.reply(result)
     enzh=wrap(enzh,['text'])
-        
+
+
+    def translate(self,irc,msg,args,langpair,text):
+        """<langpair> <text to translated
+   
+        Translate the giving text.  
+        """
+        result=self._translate(langpair,text)
+        irc.reply(result)
+    translate=wrap(translate,['something','text'])
 
 Class = Hanzi
 
