@@ -37,7 +37,8 @@ import supybot.conf as conf
 
 from bsddb import db
 from os import path
-
+import urllib
+import urllib2
 
 class Hanzi(callbacks.Plugin):
     """Add the help for "@plugin help Hanzi" here
@@ -102,6 +103,35 @@ class Hanzi(callbacks.Plugin):
 
         irc.reply(result.encode(Hanzi.CHANNEL_ENCODING))
     wubi=wrap(wubi,['something'])
+        
+    def _translate(self, langpair, text):
+        base_url=r'http://ajax.googleapis.com/ajax/services/language/translate?'
+        params=urllib.urlencode({'v':1.0, 'q':text, 'langpair':langpair})
+        url=base_url+params
+        content=urllib2.urlopen(url).read()
+        start_idx=content.find('"translatedText":"')+18
+        translation=content[start_idx:]
+        end_idx=translation.find('"}, "')
+        translation=translation[:end_idx]
+        return translation
+        
+    def zhen(self, irc, msg, args, text):
+        """<chinese sentence>
+        
+        Translate the given text from chinese to english via google tranlsator.
+        """
+        result=self._translate('zh|en',text)
+        irc.reply(result)
+    zhen=wrap(zhen,['text'])
+
+    def enzh(self, irc, msg, args, text):
+        """<chinese sentence>
+        
+        Translate the given text from chinese to english via google tranlsator.
+        """
+        result=self._translate('en|zh',text)
+        irc.reply(result)
+    enzh=wrap(enzh,['text'])
         
 
 Class = Hanzi
