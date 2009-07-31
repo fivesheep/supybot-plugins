@@ -54,7 +54,7 @@ class UrlReader(callbacks.Plugin):
     
     databases={}
     URL_PATTERN=re.compile(r'https?:\/\/[^ ]+',re.I)
-    TITLE_PATTERN=re.compile(r'<title.*?>(.*?)<\/title>',re.I)
+    TITLE_PATTERN=re.compile(r'<title.*?>(.*?)(\n|<\/title>)',re.I)
     CHAR_PATTERN=re.compile(r'charset=([a-z0-9_-]+)',re.I)
 
     def doPrivmsg(self, irc, msg):
@@ -86,7 +86,8 @@ class UrlReader(callbacks.Plugin):
             try:
                 title=self._getTitle(url)
                 if title != None:
-                    urldb[url]=pickle.dumps([nick,title])
+                    urldb[url]=pickle.dumps([nick.decode('utf-8'),title])
+                    urldb.sync()
                     irc.reply(title.encode('utf-8'))
             except:
                 traceback.print_exc()
@@ -98,8 +99,8 @@ class UrlReader(callbacks.Plugin):
         req=urllib2.Request(url,None,{'User-agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2)'})
         handler=urllib2.urlopen(req)
         if handler.headers['Content-Type'].find('html')>-1:
-            # read the first 4096 bytes
-            text=handler.read(4096)
+            # read the first 16kbytes
+            text=handler.read(16384)
             handler.close()
             tm=UrlReader.TITLE_PATTERN.search(text)
             cm=UrlReader.CHAR_PATTERN.search(text)
